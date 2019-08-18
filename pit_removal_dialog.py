@@ -26,6 +26,8 @@ import os
 
 from qgis.PyQt import uic
 from qgis.PyQt import QtWidgets
+from qgis.PyQt.QtWidgets import QAction,QFileDialog, QMessageBox
+from qgis.core import QgsProject,QgsRasterLayer
 
 # This loads your .ui file so that PyQt can populate your plugin with the elements from Qt Designer
 FORM_CLASS, _ = uic.loadUiType(os.path.join(
@@ -42,3 +44,28 @@ class PitRemovalDialog(QtWidgets.QDialog, FORM_CLASS):
         # http://qt-project.org/doc/qt-4.8/designer-using-a-ui-file.html
         # #widgets-and-dialogs-with-auto-connect
         self.setupUi(self)
+        self.add_rasters()
+        self.add_mode()
+
+    def browseOutputFile(self):
+        filename = QFileDialog.getSaveFileName(self, "Select output file ","", '*.tif')
+        self.outputPlace.setText(filename[0])
+
+
+    def browseInputFile(self):
+        filename= QFileDialog.getOpenFileName(self, "Select input raster file ","", '*.tif')
+        self.selectRaster.addItem(filename[0])
+        self.selectRaster.setItemText(0,str(filename[0]))
+
+    def add_rasters(self):
+        root= QgsProject.instance().layerTreeRoot()
+        layers_name= []
+        for Layer in root.children():
+            #check if raster
+            if isinstance(Layer.layer(),QgsRasterLayer) and Layer.layer() not in root.children():
+                self.selectRaster.addItem(Layer.name())
+
+    def add_mode(self):
+        mode= ['clip', 'minimum cost', 'balancing cost']
+        for i in range(3):
+            self.selectMode.addItem(mode[i])

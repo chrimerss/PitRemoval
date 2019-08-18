@@ -23,7 +23,10 @@
 """
 from qgis.PyQt.QtCore import QSettings, QTranslator, QCoreApplication
 from qgis.PyQt.QtGui import QIcon
-from qgis.PyQt.QtWidgets import QAction
+from qgis.PyQt.QtWidgets import QAction,QFileDialog, QMessageBox
+from qgis.core import QgsApplication, QgsMapLayer, QgsProject, QgsRasterLayer
+from qgis.core import QgsMessageLog
+from .OptimizedPitRemoval import _PitRemoval
 
 # Initialize Qt resources from file resources.py
 from .resources import *
@@ -89,8 +92,9 @@ class PitRemoval:
         text,
         callback,
         enabled_flag=True,
-        add_to_menu=True,
+        add_to_menu=False,
         add_to_toolbar=True,
+        add_to_raster=True,
         status_tip=None,
         whats_this=None,
         parent=None):
@@ -153,6 +157,10 @@ class PitRemoval:
                 self.menu,
                 action)
 
+        if add_to_raster:
+            self.iface.addPluginToRasterMenu(self.menu,
+                action)
+
         self.actions.append(action)
 
         return action
@@ -183,18 +191,52 @@ class PitRemoval:
     def run(self):
         """Run method that performs all the real work"""
 
+
         # Create the dialog with elements (after translation) and keep reference
         # Only create GUI ONCE in callback, so that it will only load when the plugin is started
         if self.first_start == True:
             self.first_start = False
             self.dlg = PitRemovalDialog()
+            self.dlg.browseOutput.clicked.connect(self.dlg.browseOutputFile)
+            self.dlg.browseInput.clicked.connect(self.dlg.browseInputFile)        #load all raster layers in the dialog
 
+        raster_layer_name= self.dlg.selectRaster.currentText()
+        raster_layer= QgsProject.instance().mapLayersByName(raster_layer_name)[0]
+        mode= self.dlg.selectMode.currentText()
+        step_size= 0.1
+
+        # cleaned_dem= self.process(raster_layer, mode, step_size)
+        # self.dlg.displayMsg("layer readed:  %s  mode readed. %s"%(raster_layer_name, mode))
         # show the dialog
-        self.dlg.show()
+
         # Run the dialog event loop
+
         result = self.dlg.exec_()
-        # See if OK was pressed
-        if result:
-            # Do something useful here - delete the line containing pass and
-            # substitute with your code.
-            pass
+
+        dst= self.dlg.outputPlace.text()
+        if dst== '':
+            QMessageBox.critical(self.dlg,'Error', 'you cannot leave output path blank')
+        else:
+            self.dlg.show()
+            # See if OK was pressed
+            if result:
+                # Do something useful here - delete the line containing pass and
+                # substitute with your code.
+                self.process(raster_layer, mode, step_size=0.1, dst= dst)
+                self.iface.addRasterLayer(dst, "pit-free_dem")
+
+
+
+
+    #TODO: add raster layer that outside of this project
+
+        # return layers_name
+
+    def process(self, dem, mode, step_size, dst):
+        RemovePit= _PitRemoval(layer=dem, mode= mode, step_size= step_size)
+        RemovePit.iterate_main_queue()
+        RemovePit._write_dem_gdal(dst= dst)
+
+
+
+
