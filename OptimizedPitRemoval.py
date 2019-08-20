@@ -50,23 +50,12 @@ class _PitRemoval(object):
     --------------
     None
     '''
-    def __init__(self,layer= None,  dem_map=None, mode="MIN_COST", step_size=0.1, dem_dst=None):
-        self.dem_map= dem_map
+    def __init__(self, layer= None, mode="MIN_COST", step_size=0.1, dem_dst=None):
         if layer is not None:
             if not isinstance(layer, QgsRasterLayer):
-                raise ValueError("Invalid input type, expected QgsRasterLayer, but get %s"%str(type(layer)))
+                raise ValueError("Invalid input type, expected QgsRasterLayer, but get %s"%layer)
             else:
                 self.dem= self._read_dem_layer(layer)
-
-        if dem_map is not None:
-            if not (isinstance(dem_map, str) or os.path.exists(dem_map)):
-                raise ValueError('File doesnot exist!')
-            else:
-                self.dem= self._read_dem(self.dem_map) # dem data
-            # print(' load in raster map: \ncrs:  %s\nheight:  %d\nwidth:  %d\ncount:  %d\ntransform:\n%s'%(self.crs,
-            #  self.width, self.height, self.count, self.transform))
-        if (dem_map is None and layer is None):
-            raise ValueError('at least provide one data source!')
 
         self.mode= mode
         self.step_size= step_size
@@ -714,27 +703,43 @@ class _PitRemoval(object):
 
         return array
 
-    def _read_dem_tif(self, dem_map):
+    def _read_dem_tif(self, tif):
         '''return dem data, bounds, crs'''
-        raster= rasterio.open(dem_map)
-        data= raster.read(1) #in case raster data only has 1 band
-        self.map_info= {'crs': raster.crs,
-                        'bounds': raster.bounds,
-                        'height': raster.height,
-                        'width': raster.width,
-                        'count': raster.count,
-                        'transform': raster.transform,}
+        gd= gd.open(tif)
+        array= gd.ReadAsArray() #in case raster data only has 1 band
+        proj= gd.GetProjection()
+        geo_trans= gd.GetGeoTransform()
+        rows, cols= array.shape
+        bands= 1
 
-        return data
+        self.metadata= {'projection': proj,
+                        'geotransform': geo_trans,
+                        'rows': rows,
+                        'cols': cols,
+                        'bands': bands,
+                        }
+
+        return array
 
     def _write_dem_gdal(self, src=None, dst=None):
         '''
         src: dem array
         dst: str, point to where you want to store the file, if not specified, create a temporary repo instead.
         '''
-        if not os.path.exists('temp') and dst is None:
-            os.mkdir('temp')
-            dst= os.path.join('temp','test.tif')
+        folder= QgsProject.instance().fileName()
+        if not os.path.exists(os.path.join(folder,'temp')):
+            try:
+                import pathlib
+                par_path= pathlib.Path(folder).parent
+                temp_path= par_path/ 'temp'
+                if temp_path.exists():
+                    dst= os.path.join(temp_path, dst)
+                else:
+                    os.mkdir(os.path.join(par_path,'temp'))
+                    dst= os.path.join(folder,'temp',dst)
+            except PermissionError:
+                import pathlib
+                dst= os.path.join(pathlib.Path.home(),'temp',dst)
         if src is None:
             src= self.geo_info['dem']
         driver= gdal.GetDriverByName("GTiff")
@@ -743,7 +748,8 @@ class _PitRemoval(object):
         geo_trans= self.metadata.get('geotransform')
         bands= self.metadata.get('bands')
         crs= self.metadata.get('projection')
-        outdata = driver.Create(dst, rows, cols, bands, gdal.GDT_Float32)
+        outdata = driver.Create(dst, cols, rows, bands, gdal.GDT_Float32)
+
         outdata.SetGeoTransform(geo_trans)
         outdata.SetProjection(crs)
         outdata.GetRasterBand(1).WriteArray(src)

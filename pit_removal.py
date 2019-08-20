@@ -27,6 +27,7 @@ from qgis.PyQt.QtWidgets import QAction,QFileDialog, QMessageBox
 from qgis.core import QgsApplication, QgsMapLayer, QgsProject, QgsRasterLayer
 from qgis.core import QgsMessageLog
 from .OptimizedPitRemoval import _PitRemoval
+import gdal
 
 # Initialize Qt resources from file resources.py
 from .resources import *
@@ -69,6 +70,7 @@ class PitRemoval:
         # Check if plugin was started the first time in current QGIS session
         # Must be set in initGui() to survive plugin reloads
         self.first_start = None
+        self.layers_name= []
 
     # noinspection PyMethodMayBeStatic
     def tr(self, message):
@@ -197,33 +199,50 @@ class PitRemoval:
         if self.first_start == True:
             self.first_start = False
             self.dlg = PitRemovalDialog()
-            self.dlg.browseOutput.clicked.connect(self.dlg.browseOutputFile)
-            self.dlg.browseInput.clicked.connect(self.dlg.browseInputFile)        #load all raster layers in the dialog
-
-        raster_layer_name= self.dlg.selectRaster.currentText()
-        raster_layer= QgsProject.instance().mapLayersByName(raster_layer_name)[0]
-        mode= self.dlg.selectMode.currentText()
-        step_size= 0.1
 
         # cleaned_dem= self.process(raster_layer, mode, step_size)
         # self.dlg.displayMsg("layer readed:  %s  mode readed. %s"%(raster_layer_name, mode))
         # show the dialog
+        self.update_rasters()
+        # self.dlg.browseOutput.clicked.connect(self.browseOutputFile)
+        # self.dlg.browseInput.clicked.connect(self.browseInputFile)
+        # self.dlg.show()
 
         # Run the dialog event loop
-
         result = self.dlg.exec_()
 
-        dst= self.dlg.outputPlace.text()
-        if dst== '':
-            QMessageBox.critical(self.dlg,'Error', 'you cannot leave output path blank')
-        else:
-            self.dlg.show()
-            # See if OK was pressed
-            if result:
-                # Do something useful here - delete the line containing pass and
-                # substitute with your code.
+            # if len(raster_layer)==0:
+            #     QMessageBox.critical(self.dlg,'Error', 'raster layer is Nonetype')
+        step_size= 0.1
+
+        # self.dlg.show()
+        # See if OK was pressed
+        # QMessageBox.information(self.dlg, 'info', 'input layer: %s, output name: %s' %(raster_layer_name, dst))
+        if result:
+            # Do something useful here - delete the line containing pass and
+            # substitute with your code.
+            raster_layer_name= self.dlg.selectRaster.currentText()
+            mode= self.dlg.selectMode.currentText()
+            raster_layer= QgsRasterLayer(raster_layer_name)
+            raster_layer_registered= gdal.Open(raster_layer.source())
+            if raster_layer_registered is not None:
+                raster_layer= QgsRasterLayer(raster_layer_name)
+            else:
+                raster_layer= QgsProject.instance().mapLayersByName(raster_layer_name)[0]
+                    #load all raster layers in the dialog
+            dst= self.dlg.outputPlace.text()
+            if len(dst)==0:
+                QMessageBox.critical(self.dlg,'Error', 'you cannot leave output path blank')
+
+            try:
                 self.process(raster_layer, mode, step_size=0.1, dst= dst)
-                self.iface.addRasterLayer(dst, "pit-free_dem")
+                QMessageBox.information(self.dlg, 'Success!', 'Completed successfully!')
+                if self.dlg.checkBox.checkState():
+                    self.iface.addRasterLayer(dst, "pit-free_dem")
+            except ValueError:
+                QMessageBox.critical(self.dlg, 'Error', 'something goes wrong.')
+
+
 
 
 
@@ -237,6 +256,24 @@ class PitRemoval:
         RemovePit.iterate_main_queue()
         RemovePit._write_dem_gdal(dst= dst)
 
+    def browseOutputFile(self):
+        filename = QFileDialog.getSaveFileName(self.dlg, "Select output file ","", '*.tif')
+        self.dlg.outputPlace.setText(filename[0])
+
+
+    def browseInputFile(self):
+        filename= QFileDialog.getOpenFileName(self.dlg, "Select input raster file ","", '*.tif')
+        self.dlg.selectRaster.addItem(filename[0])
+        self.dlg.selectRaster.setItemText(1,str(filename[0]))
+
+    def update_rasters(self):
+        root= QgsProject.instance().layerTreeRoot()
+
+        for Layer in root.children():
+            #check if raster
+            if isinstance(Layer.layer(),QgsRasterLayer) and Layer.name() not in self.layers_name:
+                self.dlg.selectRaster.addItem(Layer.name())
+                self.layers_name.append(Layer.name())
 
 
 

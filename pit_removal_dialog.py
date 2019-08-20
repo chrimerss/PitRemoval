@@ -46,6 +46,9 @@ class PitRemovalDialog(QtWidgets.QDialog, FORM_CLASS):
         self.setupUi(self)
         self.add_rasters()
         self.add_mode()
+        self.checkBox.setTristate(True)
+        self.browseOutput.clicked.connect(self.browseOutputFile)
+        self.browseInput.clicked.connect(self.browseInputFile)
 
     def browseOutputFile(self):
         filename = QFileDialog.getSaveFileName(self, "Select output file ","", '*.tif')
@@ -55,7 +58,7 @@ class PitRemovalDialog(QtWidgets.QDialog, FORM_CLASS):
     def browseInputFile(self):
         filename= QFileDialog.getOpenFileName(self, "Select input raster file ","", '*.tif')
         self.selectRaster.addItem(filename[0])
-        self.selectRaster.setItemText(0,str(filename[0]))
+        self.selectRaster.setItemText(1,str(filename[0]))
 
     def add_rasters(self):
         root= QgsProject.instance().layerTreeRoot()

@@ -45,9 +45,9 @@
   <widget class="QComboBox" name="selectMode">
    <property name="geometry">
     <rect>
-     <x>130</x>
+     <x>120</x>
      <y>90</y>
-     <width>91</width>
+     <width>101</width>
      <height>32</height>
     </rect>
    </property>
@@ -68,9 +68,9 @@
   <widget class="QComboBox" name="selectRaster">
    <property name="geometry">
     <rect>
-     <x>130</x>
+     <x>120</x>
      <y>46</y>
-     <width>181</width>
+     <width>191</width>
      <height>32</height>
     </rect>
    </property>
@@ -91,7 +91,7 @@
   <widget class="QToolButton" name="browseInput">
    <property name="geometry">
     <rect>
-     <x>310</x>
+     <x>324</x>
      <y>50</y>
      <width>26</width>
      <height>22</height>
@@ -117,7 +117,7 @@
   <widget class="QToolButton" name="browseOutput">
    <property name="geometry">
     <rect>
-     <x>310</x>
+     <x>324</x>
      <y>140</y>
      <width>26</width>
      <height>22</height>
@@ -130,9 +130,9 @@
   <widget class="QLineEdit" name="outputPlace">
    <property name="geometry">
     <rect>
-     <x>137</x>
+     <x>127</x>
      <y>140</y>
-     <width>161</width>
+     <width>171</width>
      <height>21</height>
     </rect>
    </property>
