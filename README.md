@@ -64,5 +64,5 @@ MIT © 2018
 
 
 ## TODO
-- [ ] fix issues with Chandevar islands catchment
-- [ ] fix issues that duplicate raster layer name
+- [x] fix issues with Chandevar islands catchment
+- [x] fix issues that duplicate raster layer name
