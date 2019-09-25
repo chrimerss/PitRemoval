@@ -12,8 +12,8 @@ email=chrimerss@gmail.com
 
 about=In hydrology, it is under a lot of processes to deal with DEM data, but somehow, when clipping DEM data, it will produce some pits by error. In order to clean our DEM to get more accurate results, PitRemoval plugin is designed.
 
-tracker=https://github.com/chrimerss/PitRemovalQGIS
-repository=https://github.com/chrimerss/PitRemovalQGIS
+tracker=https://github.com/chrimerss/PitRemoval
+repository=https://github.com/chrimerss/PitRemoval
 # End of mandatory metadata
 
 # Recommended items:
@@ -25,7 +25,7 @@ hasProcessingProvider=no
 # Tags are comma separated with spaces allowed
 tags=python
 
-homepage=https://github.com/chrimerss/PitRemovalQGIS
+homepage=https://github.com/chrimerss/PitRemoval
 category=Plugins
 icon=icon.png
 # experimental flag

@@ -14,14 +14,14 @@
 
 First, make sure you have [git](https://git-scm.com/) installed on your local computer.
 
-Then open your terminal in the folder where you want to git, and clone this repository with 
+Then open your terminal in the folder where you want to git, and clone this repository with
 ```
 git clone https://github.com/chrimerss/PitRemoval
 ```
 
 At last, make sure the folder exists in:
 
-for Mac user: 
+for Mac user:
 
 go to the folder where you have python plugin inside, for example /Applications/QGISx.x.app/Resources/python/plugins/
 
@@ -49,6 +49,13 @@ then tick 'pit removal' plugin.
 
 <img src="resources/screenshot.png">
 
+### Description of the model
+
+Inputs:
+
+Mode:  'cut', 'MIN_COST', 'BAL'
+
+
 
 ## Maintainers
 
@@ -60,7 +67,7 @@ then tick 'pit removal' plugin.
 
 ## License
 
-MIT © 2018 
+MIT © 2018
 
 
 ## TODO

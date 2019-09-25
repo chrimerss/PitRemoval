@@ -121,7 +121,7 @@ class _PitRemoval(object):
 
         '''
 
-        m,n= ID//self.num_cols, ID%self.num_rows
+        m,n= self._id_transform(ID)
         pit_elev= self.geo_info['dem'][m,n]
 
         crest_elev= self.get_crest_elev(ID)
@@ -500,8 +500,7 @@ class _PitRemoval(object):
         del self.dem
         # self.geo_info['dem'][2,2]=np.nan
         for i in range(self.tot_size):
-            m= i//self.num_cols
-            n= i% self.num_rows
+            m,n= self._id_transform(i)
             novalue= self._neighbor_wo_value(i)
             if self.geo_info['border'][m,n]:
                 # print('border')
@@ -518,8 +517,7 @@ class _PitRemoval(object):
 
 
     def _add_main_queue(self,ID: int,ConfirmDescend: bool):
-        m= ID//self.num_cols
-        n= ID % self.num_rows
+        m,n= self._id_transform(ID)
         if self.geo_info['flooded'][m,n]==0:
             self.main_queue.id.append(ID)
             self.main_queue.elev.append(self.geo_info['dem'][m,n])
@@ -535,7 +533,7 @@ class _PitRemoval(object):
         # check whether its neighbor has no value
         neighbors= self._get_neighbors(ID)
         for i in range(len(neighbors)):
-            m,n= int(neighbors[i]//self.num_cols), int(neighbors[i] %self.num_rows)
+            m,n= self._id_transform(ID)
             # print(m,n)
             if neighbors[i]==-1:
                 novalue=1
@@ -666,7 +664,7 @@ class _PitRemoval(object):
 
     def isLocalMinimum(self, ID: int) -> bool:
         minimum= True
-        m,n= ID//self.num_cols, ID% self.num_rows
+        m,n= self._id_transform(ID)
         if self.geo_info['flooded'][m,n]==2: #current cell is on confirmed path to outlet
             minimum= False
         else:
@@ -682,7 +680,7 @@ class _PitRemoval(object):
 
     def _id_transform(self, ID):
         '''Simply transform ID to rows and columns value'''
-        return int(ID//self.num_cols), int(ID % self.num_rows)
+        return int(ID//self.num_cols), int(ID % self.num_cols)
 
     def _read_dem_layer(self, layer):
         ''' Input layer: QGIS loaded project layer'''
